@@ -1,0 +1,17 @@
+# Ignore API keys and configuration
+config.py
+
+# Ignore Python cache and environment
+__pycache__/
+*.py[cod]
+*$py.class
+
+.env
+
+# Ignore Database files (your local memory)
+*.db
+*.sqlite3
+
+# Ignore OS specific files
+.DS_Store
+Thumbs.db
