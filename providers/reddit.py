@@ -12,6 +12,7 @@ ALLOWED_SUBREDDITS = {
     "stocks",
     "investing",
     "IndiaStockPulse",
+    "IPO_india",
 }
 
 SIGNAL_KEYWORDS = {

@@ -8,6 +8,38 @@ from capabilities.indicators.basic import get_indicators
 from capabilities.indicators.signals import compute_signals
 from capabilities.events import get_asset_events
 from capabilities.attention import get_social_attention
+from providers.ipo_documents import get_ipo_documents
+from capabilities.ipo_analysis import analyze_financials
+from capabilities.ipo_sentiment import analyze_ipo_sentiment
+from capabilities.ipo_red_flags import analyze_red_flags
+from capabilities.ipo_final_report import assemble_final_ipo_report
+
+
+# Detect if the user is asking about IPOs
+def is_ipo_query(text: str) -> bool:
+    keywords = {
+        "ipo", "apply", "listing", "drhp", "issue",
+        "should i apply", "ipo analysis", "ipo review"
+    }
+    return any(k in text.lower() for k in keywords)
+
+# Simple heuristic extraction for IPO name
+def extract_ipo_name(text: str) -> str | None:
+    text = text.lower()
+
+    # remove intent words
+    junk = {
+        "ipo", "apply", "analysis", "review",
+        "should", "i", "invest", "in", "for"
+    }
+
+    words = [w for w in text.split() if w not in junk]
+
+    if not words:
+        return None
+
+    # Capitalize properly for scrapers
+    return " ".join(words).title()
 
 
 # Utility to clean extracted asset candidates
@@ -332,6 +364,40 @@ def handle_user_message(user_text: str) -> str:
         )
 
         return response.choices[0].message.content
+    # -------- IPO MODE --------
+    if is_ipo_query(user_text):
+        ipo_name = extract_ipo_name(user_text)
+
+        if not ipo_name:
+            return "Please mention the IPO name you want to analyze."
+
+        # 1️⃣ Documents
+        ipo_doc = get_ipo_documents(ipo_name)
+        if not ipo_doc:
+            return f"I couldn’t find IPO details for {ipo_name}."
+
+        # 2️⃣ Financial analysis
+        financial_analysis = analyze_financials(ipo_doc)
+
+        # 3️⃣ Sentiment
+        sentiment = analyze_ipo_sentiment(ipo_name)
+
+        # 4️⃣ Red flags
+        red_flags = analyze_red_flags(
+            financials=ipo_doc["financials"],
+            issue_details=ipo_doc.get("issue", {}),
+            sector=None  # optional for now
+        )
+
+        # 5️⃣ Final report
+        report = assemble_final_ipo_report(
+            company=ipo_name,
+            financials=financial_analysis,
+            sentiment=sentiment,
+            red_flags=red_flags
+        )
+
+        return report
 
     # -------- CONTEXT MODE (FIRST) --------
     if intent == "context":
