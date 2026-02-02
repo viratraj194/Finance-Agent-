@@ -72,25 +72,28 @@ def analyze_ipo_sentiment(company: str) -> Dict:
     # 4. OUTPUT
     # -----------------------------
     return {
-        "posts_analyzed": total_posts,
+        "posts_analyzed": len(reddit_posts),
         "articles_analyzed": len(news_articles),
-        "sentiment_split": dict(sentiment_counter),
-        "themes": [t for t, _ in themes.most_common(3)],
+
         "sample_reddit": [
             {
                 "title": p["title"],
                 "subreddit": p["subreddit"],
-                "url": p["url"],
+                "url": p["url"]
             }
             for p in reddit_posts[:5]
         ],
+
         "sample_news": [
             {
-                "title": n["title"],
-                "source": n["source"],
-                "url": n["url"],
+                "title": a["title"],
+                "source": a["source"],
+                "url": a["url"]
             }
-            for n in news_articles[:5]
+            for a in news_articles[:5]
         ],
-        "assessment": assessment,
+
+        "themes": themes,
+        "assessment": quick_summary
     }
+

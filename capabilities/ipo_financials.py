@@ -116,3 +116,26 @@ def _infer_growth_trend(revenues: Dict[str, str]) -> str:
         return "deteriorating"
     else:
         return "flat"
+
+
+# -----------------------------
+# PUBLIC ANALYSIS API (REQUIRED)
+# -----------------------------
+
+def analyze_financials(text_blocks: List[str]) -> Dict:
+    """
+    High-level IPO financial analysis wrapper.
+    This is what the agent imports.
+    """
+
+    extracted = extract_financials_from_text(text_blocks)
+
+    return {
+        "revenue": extracted.get("revenue", {}),
+        "profit": extracted.get("profit"),
+        "loss": extracted.get("loss"),
+        "debt": extracted.get("debt"),
+        "growth_trend": extracted.get("growth_trend"),
+        "raw_numbers_found": extracted.get("raw_numbers_found"),
+        "is_profitable": bool(extracted.get("profit")) and not extracted.get("loss")
+    }
