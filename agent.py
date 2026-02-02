@@ -15,6 +15,23 @@ from capabilities.ipo_red_flags import analyze_red_flags
 from capabilities.ipo_final_report import assemble_final_ipo_report
 
 
+def is_ipo_query(text: str) -> bool:
+    keywords = ["ipo", "initial public offering", "listing"]
+    return any(k in text.lower() for k in keywords)
+
+
+def extract_ipo_company(text: str) -> str | None:
+    cleaned = (
+        text.lower()
+        .replace("ipo", "")
+        .replace("initial public offering", "")
+        .replace("listing", "")
+        .strip()
+    )
+
+    return cleaned.title() if cleaned else None
+
+
 # Detect if the user is asking about IPOs
 def is_ipo_query(text: str) -> bool:
     keywords = {
@@ -365,7 +382,34 @@ def handle_user_message(user_text: str) -> str:
 
         return response.choices[0].message.content
     # -------- IPO MODE --------
+    # -------- IPO MODE --------
     if is_ipo_query(user_text):
+
+        company = extract_ipo_company(user_text)
+
+        if not company:
+            return "Please mention the IPO name you want to analyze."
+
+        try:
+            from capabilities.ipo_analyzer import analyze_ipo
+
+            report = analyze_ipo(company)
+
+            if not report:
+                return (
+                    f"I couldn’t find detailed IPO documents for {company}.\n\n"
+                    "However, this IPO may be upcoming, speculative, or not fully disclosed yet.\n"
+                    "You can try again once more details are public."
+                )
+
+            return report
+
+        except Exception as e:
+            return (
+                "IPO analysis is temporarily unavailable.\n"
+                f"Reason: {str(e)}"
+            )
+
         ipo_name = extract_ipo_name(user_text)
 
         if not ipo_name:

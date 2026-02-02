@@ -1,108 +1,145 @@
-from typing import Dict
+from typing import Dict, Optional
 
 
 def assemble_final_ipo_report(
     company: str,
-    financials: Dict,
+    financials: Optional[Dict],
     sentiment: Dict,
     red_flags: Dict,
+    ipo_doc: Optional[Dict] = None,
 ) -> str:
-    # -------------------------
-    # Business fundamentals
-    # -------------------------
-    revenue = financials["revenue"]
-    profit = financials["profit"]
-
-    completed_years = sorted(
-        [y for y in revenue.keys() if not y.endswith("26")]
-    )
-
-    latest_fy = completed_years[-1]
-    prev_fy = completed_years[-2] if len(completed_years) >= 2 else None
-
-    yoy_growth = (
-        financials["yoy_growth"].get(latest_fy)
-        if prev_fy else None
-    )
-
-    yoy_text = f"{yoy_growth}%" if yoy_growth is not None else "N/A"
 
     # -------------------------
-    # Sentiment metrics
+    # Confidence score (grounded)
     # -------------------------
-    total_posts = sentiment["posts_analyzed"]
-    total_articles = sentiment["articles_analyzed"]
+    confidence = 60  # neutral base
 
-    split = sentiment["sentiment_split"]
-    total_sentiment = sum(split.values()) or 1
-
-    pos_pct = round((split["positive"] / total_sentiment) * 100)
-    neu_pct = round((split["neutral"] / total_sentiment) * 100)
-    neg_pct = round((split["negative"] / total_sentiment) * 100)
-
-    # Sample visibility (important for investor trust)
-    reddit_samples = sentiment.get("sample_reddit", [])[:3]
-    news_samples = sentiment.get("sample_news", [])[:3]
-
-    # -------------------------
-    # Confidence score heuristic
-    # -------------------------
-    score = 70
-
-    if financials["cagr"] and financials["cagr"] > 20:
-        score += 5
+    if financials:
+        if financials.get("cagr") and financials["cagr"] > 15:
+            confidence += 5
+        if "strong" in financials["assessment"].lower():
+            confidence += 5
 
     if sentiment["assessment"].lower().startswith("strong"):
-        score += 5
+        confidence += 5
 
     if red_flags["flags"]:
-        score -= 5
+        confidence -= 5
 
-    score = min(max(score, 55), 85)
+    confidence = max(55, min(confidence, 80))
+
+    # -------------------------
+    # Business fundamentals block
+    # -------------------------
+    fundamentals_block = "Financial data not fully disclosed yet."
+
+    if financials:
+        revenue = financials["revenue"]
+        profit = financials["profit"]
+
+        latest_year = list(revenue.keys())[-1]
+        prev_year = list(revenue.keys())[-2] if len(revenue) >= 2 else None
+        yoy = financials["yoy_growth"].get(latest_year) if prev_year else None
+
+        fundamentals_block = f"""
+• Revenue ({latest_year}): ₹{revenue[latest_year]} Cr
+• Net Profit ({latest_year}): ₹{profit.get(latest_year)} Cr
+• YoY Growth: {yoy if yoy is not None else "N/A"}%
+""".strip()
+
+    # -------------------------
+    # Sentiment samples
+    # -------------------------
+    reddit_samples = "\n".join(
+        f"- {p['title']} ({p['subreddit']})"
+        for p in sentiment.get("sample_reddit", [])[:3]
+    )
+
+    news_samples = "\n".join(
+        f"- {a['title']}"
+        for a in sentiment.get("sample_news", [])[:3]
+    )
 
     # -------------------------
     # Final report
     # -------------------------
     report = f"""
-Final IPO Entry Confidence: {score}%
+Final IPO Entry Confidence: {confidence}%
 
 1) Business Fundamentals
-• Revenue ({latest_fy}): ₹{revenue[latest_fy]} Cr
-• Net Profit ({latest_fy}): ₹{profit.get(latest_fy)} Cr
-• YoY Growth: {yoy_text}
+{fundamentals_block}
 
-Assessment: {financials["assessment"]}
+Assessment:
+{financials["assessment"] if financials else "Insufficient financial disclosures at this stage."}
 
 2) Revenue & Growth Trend
-• Last 3 years revenue trend: Rising
-• CAGR (approx): {financials["cagr"]}%
-• Recent margin trend: {financials["margin_trend"]}
-
-Assessment: Growth trajectory appears sustainable, not aggressive.
+• CAGR (approx): {financials["cagr"] if financials else "N/A"}%
+• Margin trend: {financials["margin_trend"] if financials else "N/A"}
 
 4) Retail & Social Sentiment
-• Reddit posts analyzed: {total_posts}
-• News articles analyzed: {total_articles}
+• Posts & articles analyzed: {sentiment["posts_analyzed"] + sentiment["articles_analyzed"]}
 • Positive / Neutral / Negative split:
-  {pos_pct}% / {neu_pct}% / {neg_pct}%
+  {sentiment["sentiment_split"]["positive"]} / {sentiment["sentiment_split"]["neutral"]} / {sentiment["sentiment_split"]["negative"]}
 • Dominant themes: {", ".join(sentiment["themes"])}
 
 Sample Reddit discussions:
-{chr(10).join([f"- {r['title']} ({r['subreddit']})" for r in reddit_samples])}
+{reddit_samples if reddit_samples else "- No strong Reddit discussions found"}
 
-Sample News headlines:
-{chr(10).join([f"- {n['title']} ({n['source']})" for n in news_samples])}
+Sample News coverage:
+{news_samples if news_samples else "- Limited mainstream media coverage"}
 
-Assessment: {sentiment["assessment"]}
+Assessment:
+{sentiment["assessment"]}
 
 5) Red Flags
 • Identified risks: {", ".join(red_flags["flags"]) if red_flags["flags"] else "None"}
 
-Assessment: {red_flags["assessment"]}
+Assessment:
+{red_flags["assessment"]}
 
 Investor Clarity
 This IPO appears suitable for investors with **moderate risk appetite**
-seeking medium- to long-term exposure rather than short-term listing gains.
+who prefer understanding business fundamentals and sentiment,
+rather than chasing listing-day speculation.
 """.strip()
 
     return report
+
+
+def quick_summary(financials: dict, sentiment: dict, red_flags: dict) -> str:
+    """
+    Generates a short human-readable IPO summary.
+    """
+
+    parts = []
+
+    # Financial strength
+    if financials.get("is_profitable"):
+        parts.append("profitable business")
+    else:
+        parts.append("loss-making business")
+
+    # Growth
+    cagr = financials.get("cagr")
+    if cagr:
+        if cagr >= 15:
+            parts.append("strong revenue growth")
+        elif cagr >= 8:
+            parts.append("moderate growth")
+        else:
+            parts.append("low growth")
+
+    # Sentiment
+    sentiment_assessment = sentiment.get("assessment", "").lower()
+    if "strong" in sentiment_assessment:
+        parts.append("positive retail sentiment")
+    elif "low" in sentiment_assessment:
+        parts.append("low retail visibility")
+
+    # Red flags
+    if red_flags.get("flags"):
+        parts.append("some risk factors present")
+    else:
+        parts.append("no major red flags")
+
+    return ", ".join(parts).capitalize() + "."
