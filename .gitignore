@@ -5,6 +5,8 @@ config.py
 __pycache__/
 *.py[cod]
 *$py.class
+venv/
+.venv/
 
 .env
 
@@ -15,3 +17,18 @@ __pycache__/
 # Ignore OS specific files
 .DS_Store
 Thumbs.db
+
+# Ignore session/secret files
+open-wa-session.sw_col.json
+open-wa-session.postman_collection.json
+
+# Ignore WhatsApp Web JS auth/cache
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Ignore node-persist
+.node-persist/
+
+# Ignore IDE/editor settings
+.vscode/
+.antigravitycli/
