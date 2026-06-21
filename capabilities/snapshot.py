@@ -33,5 +33,10 @@ def get_market_snapshot(user_text: str):
         "prev_date": data["prev_date"],
         "change": data["change"],
         "change_pct": data["change_pct"],
-        "direction": direction
+        "direction": direction,
+        "open": data.get("open"),
+        "high": data.get("high"),
+        "low": data.get("low"),
+        "fundamentals": data.get("fundamentals"),
+        "recent_actions": data.get("recent_actions")
     }

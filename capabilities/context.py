@@ -1,8 +1,11 @@
 from openai import OpenAI
-from config import OPENAI_API_KEY
+from config import NVIDIA_API_KEY
 from providers.yahoo import search_symbol
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=NVIDIA_API_KEY
+)
 
 SYSTEM_PROMPT = """
 You are a financial reference assistant.
@@ -36,15 +39,19 @@ def get_asset_context(asset_query: str) -> dict | None:
         "Do not include prices, performance, or opinions."
     )
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt}
-        ]
-    )
+    try:
+        response = client.chat.completions.create(
+            model="meta/llama-3.3-70b-instruct",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        content = response.choices[0].message.content if response and response.choices else None
+    except Exception:
+        content = None
 
     return {
         "symbol": symbol,
-        "description": response.choices[0].message.content
+        "description": content or "Details temporarily unavailable."
     }

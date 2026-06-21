@@ -1,5 +1,5 @@
 from capabilities.ipo_documents import get_ipo_documents
-from capabilities.ipo_financials import analyze_financials
+from capabilities.ipo_analysis import analyze_financials
 from capabilities.ipo_sentiment import analyze_ipo_sentiment
 from capabilities.ipo_red_flags import analyze_red_flags
 from capabilities.ipo_final_report import assemble_final_ipo_report

@@ -94,6 +94,6 @@ def analyze_ipo_sentiment(company: str) -> Dict:
         ],
 
         "themes": themes,
-        "assessment": quick_summary
+        "assessment": assessment
     }
 

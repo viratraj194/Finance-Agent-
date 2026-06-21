@@ -3,12 +3,12 @@ from datetime import datetime
 
 
 TIMEFRAME_MAP = {
-    "1m": {"period": "2mo", "interval": "1d"},
-    "3m": {"period": "4mo", "interval": "1d"},
-    "6m": {"period": "7mo", "interval": "1d"},
-    "1y": {"period": "13mo", "interval": "1d"},
-    "3y": {"period": "4y", "interval": "1d"},
-    "5y": {"period": "6y", "interval": "1d"},
+    "1m": {"period": "1mo", "interval": "1d"},
+    "3m": {"period": "3mo", "interval": "1d"},
+    "6m": {"period": "6mo", "interval": "1d"},
+    "1y": {"period": "1y", "interval": "1d"},
+    "3y": {"period": "3y", "interval": "1d"},
+    "5y": {"period": "5y", "interval": "1d"},
 }
 
 
